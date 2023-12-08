@@ -18,7 +18,7 @@
     <ClCompile Include="d3dUtility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Human.cpp">
+    <ClCompile Include="..\..\..\Graphic\SmapleCodesX9\Chapter 6\AddressModes\addressModes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -26,8 +26,13 @@
     <ClInclude Include="d3dUtility.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="drawer.h">
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\Graphic\SmapleCodesX9\Chapter 6\AddressModes\chap6_2.jpg">
       <Filter>Source Files</Filter>
-    </ClInclude>
+    </Image>
+    <Image Include="..\..\..\Graphic\SmapleCodesX9\Chapter 6\AddressModes\dx5_logo.bmp">
+      <Filter>Source Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

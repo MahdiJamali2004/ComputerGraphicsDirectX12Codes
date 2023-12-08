@@ -142,12 +142,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\Graphic\SmapleCodesX9\Chapter 6\AddressModes\addressModes.cpp" />
     <ClCompile Include="d3dUtility.cpp" />
-    <ClCompile Include="Human.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="d3dUtility.h" />
-    <ClInclude Include="drawer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\Graphic\SmapleCodesX9\Chapter 6\AddressModes\chap6_2.jpg" />
+    <Image Include="..\..\..\Graphic\SmapleCodesX9\Chapter 6\AddressModes\dx5_logo.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
