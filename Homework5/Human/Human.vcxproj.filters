@@ -24,6 +24,9 @@
     <ClCompile Include="PlaneWithTexture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Extra.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="d3dUtility.h">
@@ -32,12 +35,18 @@
     <ClInclude Include="PlaneWithTexture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Extra.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="sky3.jpg">
       <Filter>Source Files</Filter>
     </Image>
     <Image Include="stoneFlore.jpg">
+      <Filter>Source Files</Filter>
+    </Image>
+    <Image Include="walls.jpg">
       <Filter>Source Files</Filter>
     </Image>
   </ItemGroup>

@@ -143,16 +143,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="d3dUtility.cpp" />
+    <ClCompile Include="Extra.cpp" />
     <ClCompile Include="human.cpp" />
     <ClCompile Include="PlaneWithTexture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="d3dUtility.h" />
+    <ClInclude Include="Extra.h" />
     <ClInclude Include="PlaneWithTexture.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="sky3.jpg" />
     <Image Include="stoneFlore.jpg" />
+    <Image Include="walls.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

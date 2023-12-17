@@ -1,57 +1,82 @@
-//////////////////////////////////////////////////////////////////////////////////////////////////
-// 
-// File: directionalLight.cpp
-// 
-// Author: Frank Luna (C) All Rights Reserved
-//
-// System: AMD Athlon 1800+ XP, 512 DDR, Geforce 3, Windows XP, MSVC++ 7.0 
-//
-// Desc: Demonstrates using a directional light with D3DX objects.  You can orbit
-//       the scene using the left and right arrow keys.  In addition you can 
-//       elevate the camera with the up and down arrow keys.
-//          
-//////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "d3dUtility.h"
 #include "PlaneWithTexture.h"
-#include <iostream>
-//
-// Globals
-//
+#include"Extra.h"
 
-void movmentX( float timedelta );
-void movmentUp( float timedelta);
-void movmentZ( float timedelta);
-void HumanAnimations(float &angel);
+//just translation
+void movmentX(float direction);
+void movmentUp(float direction);
+void movmentZ(float direction);
+//hand , feet animation
+void animation(float degreeToRotate);
+
 void lighting();
-void FullHuman();
-void CreateFloreAndSky();
-IDirect3DDevice9* Device = 0;
-const int NumOfObj = 18;
-const int Width = 640;
-const int Height = 480;
 
-ID3DXMesh* Objects[NumOfObj] = { 0, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+// human created here
+void FullHuman();
+
+// sky and flore created here
+void CreateFloreAndSky();
+
+// create walls here
+void createWalls();
+
+//function that get first position and moved position of object and currentPosition of object and a rotation to rotate
+D3DXMATRIX rotationInAnyPosition(D3DXMATRIX currentPos,Position firstPosition,Position movedPostion
+	, DegreeWithDirection rotateToset);
+
+//matrix that returns translate input and return it
+D3DXMATRIX translateObjects(D3DXMATRIX objectToTranslate,Position move);
+
+
+IDirect3DDevice9* Device = 0;
+
+const int Width = 900;
+const int Height = 700;
+
+//objects postions and materials of human
+const int NumOfObj = 16;
+ID3DXMesh* Objects[NumOfObj] = {0};
 D3DXMATRIX  Worlds[NumOfObj];
 D3DMATERIAL9 Mtrls[NumOfObj];
 
+
+//sky and flore
 D3DXMATRIX Planes_Worlds[2];
 IDirect3DTexture9* TexFlore = 0;
 IDirect3DTexture9* TexSky = 0;
 PlaneWithTexture* flore = 0;
 PlaneWithTexture* sky = 0;
 
-//
-// Framework Functions
-//
+//walls
+D3DXMATRIX walls_Worlds[4];
+IDirect3DTexture9* TexWalls = 0;
+PlaneWithTexture* backWall = 0;
+PlaneWithTexture* frontWall = 0;
+PlaneWithTexture* leftWall = 0;
+PlaneWithTexture* rightWall = 0;
+
+
+
+
+//human rotation animation speed and movment speed
+float humanRotationSpeed = 0.004f;
+float humanRotation = 0.1f;
+float speed = 0.005;
+// positions of movements
+ float movedInX = 0.0f; 
+ float movedInY = 0.0f;
+ float movedInZ = 0.0f; 
+
+
+
+
 bool Setup()
 {
-	//
-	// Create objects.
-	//
+	
 	FullHuman();
 	CreateFloreAndSky();
-
+	createWalls();
 
 	
 	
@@ -78,7 +103,7 @@ bool Setup()
 	D3DXMATRIX proj;
 	D3DXMatrixPerspectiveFovLH(
 		&proj,
-		D3DX_PI *0.44, // 45 - degree
+		D3DX_PI *0.5, // 45 - degree
 		(float)Width / (float)Height,
 		1.0f,
 		1000.0f);
@@ -97,11 +122,10 @@ bool Display(float timeDelta)
 {
 	if (Device)
 	{
-	
-		movmentUp(timeDelta);//E:up , Q:Down
-		movmentX(timeDelta);//A:left , D:right
-		movmentZ(timeDelta);//W:fornt , S:back
-		//HumanAnimations(timeDelta);
+		static float accumulatedTime = 0.0f;
+		accumulatedTime += timeDelta;
+		
+
 	
 	
 		static float angle = (3.0f * D3DX_PI) / 2.0f;
@@ -118,6 +142,56 @@ bool Display(float timeDelta)
 
 		if (::GetAsyncKeyState(VK_DOWN) & 0x8000f)
 			height -= 5.0f * timeDelta;
+		if (::GetAsyncKeyState(0x53) & 0x8000f) // Key(S)
+		{
+		 
+			if (movedInZ <=95.0f)
+			{
+				//change direction of rotation 
+				if (humanRotation >= 0.68f || humanRotation <= -0.68f)
+				{
+					humanRotationSpeed *= -1;
+
+				}
+				humanRotation += humanRotationSpeed;
+				animation(humanRotationSpeed);
+				movmentZ(+1.0f);
+			}
+		
+	
+		}
+		if (::GetAsyncKeyState(0x57) & 0x8000f) // Key(W)
+		{
+			if (movedInZ >= -95.0f)
+			{
+				//change direction of rotation 
+				if (humanRotation >= 0.68f || humanRotation <= -0.68f)
+				{
+					humanRotationSpeed *= -1;
+				}
+				humanRotation += humanRotationSpeed;
+				animation(humanRotationSpeed);
+				movmentZ(-1.0f);
+
+			}
+	
+		}
+		if (::GetAsyncKeyState(0x41) & 0x8000f) // Key(A)
+		{
+			if (movedInX>= -95.0f)
+			{
+				movmentX(-1.0f); // go left
+			}
+			
+		}
+		if (::GetAsyncKeyState(0x44) & 0x8000f) // Key(D)
+		{
+			if (movedInX<= 95.0f)
+			{
+				movmentX(+1.0f); // go right
+			}
+		
+		}
 
 		D3DXVECTOR3 position(cosf(angle) * 7.0f, height, sinf(angle) * 7.0f);
 
@@ -136,8 +210,12 @@ bool Display(float timeDelta)
 		Device->Clear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 1.0f, 0);
 		Device->BeginScene();
 
-		flore->draw(&Planes_Worlds[0], &Mtrls[9], TexFlore);
-		sky->draw(&Planes_Worlds[1], &Mtrls[9], TexSky);
+		flore->draw(&Planes_Worlds[0], &Mtrls[6], TexFlore);
+		sky->draw(&Planes_Worlds[1], &Mtrls[6], TexSky);
+		backWall->draw(&walls_Worlds[0], &Mtrls[6], TexWalls);
+		frontWall->draw(&walls_Worlds[1], &Mtrls[6], TexWalls);
+		leftWall->draw(&walls_Worlds[2], &Mtrls[6], TexWalls);
+		rightWall->draw(&walls_Worlds[3], &Mtrls[6], TexWalls);
 
 		for (int i = 0; i< NumOfObj; i++)
 		{
@@ -205,141 +283,136 @@ int WINAPI WinMain(HINSTANCE hinstance,
 	return 0;
 }
 
-void movmentX( float timedelta)
+void animation(float degreeToRotate)
 {
+	Worlds[0] = rotationInAnyPosition(Worlds[0]
+		, Position(-0.5f, 0.2f, 0.0f)
+		, Position(movedInX, movedInY, movedInZ)
+		, DegreeWithDirection(+degreeToRotate, 'x'));
+	Device->SetTransform(D3DTS_WORLD, &Worlds[0]);
+	Objects[0]->DrawSubset(0);
 
+	Worlds[1] = rotationInAnyPosition(Worlds[1]
+		, Position(0.5f, 0.2f, 0.0f)
+		, Position(movedInX, movedInY, movedInZ)
+		, DegreeWithDirection(-degreeToRotate, 'x'));
+	Device->SetTransform(D3DTS_WORLD, &Worlds[1]);
+	Objects[1]->DrawSubset(0);
 
-	D3DXMATRIX helper;
-	if (::GetAsyncKeyState(0x41) & 0x8000f) // Key(D)
-	{
-		
-		D3DXMatrixTranslation(&helper, 5.0*timedelta*-1.0, 0.0f, 0.0f);
-		for (int i = 0; i < NumOfObj; i++)
-		{
-			Worlds[i] *= helper;
-			Device->SetTransform(D3DTS_WORLD, &Worlds[i]);
+	Worlds[2] = rotationInAnyPosition(Worlds[2]
+		, Position(-1.2f, 2.2f, 0.0f)
+		, Position(movedInX, movedInY, movedInZ)
+		, DegreeWithDirection(+degreeToRotate, 'x'));
+	Device->SetTransform(D3DTS_WORLD, &Worlds[2]);
+	Objects[2]->DrawSubset(0);
 
-		}
-	}
-	if (::GetAsyncKeyState(0x44) & 0x8000f) // Key(A)
-	{
-
-	    D3DXMatrixTranslation(&helper, 5.0 * timedelta * 1.0, 0.0f, 0.0f);
-		for (int i = 0; i < NumOfObj; i++)
-		{
-			Worlds[i] *= helper;
-			Device->SetTransform(D3DTS_WORLD, &Worlds[i]);
-
-		}
-	}
-
+	Worlds[3] = rotationInAnyPosition(Worlds[3]
+		, Position(1.2f, 2.2f, 0.0f)
+		, Position(movedInX, movedInY, movedInZ)
+		, DegreeWithDirection(-degreeToRotate, 'x'));
+	Device->SetTransform(D3DTS_WORLD, &Worlds[3]);
+	Objects[3]->DrawSubset(0);
 }
 
-void movmentUp(float timedelta)
+D3DXMATRIX rotationInAnyPosition(D3DXMATRIX currentPos, Position firstPosition,
+	Position movedPostion, DegreeWithDirection rotateToset)
 {
-	D3DXMATRIX helper;
-
-
-	if (::GetAsyncKeyState(0x45) & 0x8000f) // Key(E)
+	D3DXMATRIX bringToZero,matrixRotation,bringBack;
+	D3DXMatrixTranslation(&bringToZero, -(firstPosition.x + movedPostion.x)
+		, -(firstPosition.y + movedPostion.y), -(firstPosition.z + movedPostion.z));
+	//now the object is in 0.0.0
+	currentPos *= bringToZero;
+	switch (rotateToset.direction)
 	{
-		
-		D3DXMatrixTranslation(&helper, 0.0f, 5.0f * timedelta * 1.0, 0.0f);
-		for (int i = 0; i < NumOfObj; i++)
-		{
-			Worlds[i] *= helper;
-			Device->SetTransform(D3DTS_WORLD, &Worlds[i]);
-
-		}
-
+	case 'x':
+		D3DXMatrixRotationX(&matrixRotation, rotateToset.deg);
+		break;
+	case 'y':
+		D3DXMatrixRotationX(&matrixRotation, rotateToset.deg);
+		break;
+	case 'z':
+		D3DXMatrixRotationX(&matrixRotation, rotateToset.deg);
+		break;
 	}
-	if (::GetAsyncKeyState(0x51) & 0x8000f) // Key(Q)
-	{
-		
-		D3DXMatrixTranslation(&helper,0.0f , 5.0f * timedelta * -1.0, 0.0f);
-		for (int i = 0; i < NumOfObj; i++)
-		{
-			Worlds[i] *= helper;
-			Device->SetTransform(D3DTS_WORLD, &Worlds[i]);
-
-		}
-	}
+	currentPos *= matrixRotation;
+	//bring back object to position that it had
+	D3DXMatrixTranslation(&bringBack, (firstPosition.x + movedPostion.x)
+		, (firstPosition.y + movedPostion.y), (firstPosition.z + movedPostion.z));
+	currentPos *= bringBack;
+	return currentPos;
 }
 
-void movmentZ(float timedelta)
+void movmentX( float direction)
 {
-	D3DXMATRIX helper;
-	if (::GetAsyncKeyState(0x53) & 0x8000f) // Key(S)
-	{
-		
 
-		D3DXMatrixTranslation(&helper, 0.0f, 0.0f, 5.0 * timedelta * 1.0);
+	if (direction > 0)
+	{
+		movedInX += speed;
 		for (int i = 0; i < NumOfObj; i++)
 		{
-		
-			
-			Worlds[i] *= helper;
-			Device->SetTransform(D3DTS_WORLD, &Worlds[i]);
-			
-
+			Worlds[i] = translateObjects(Worlds[i], Position(speed, 0.0f, 0.0f));
 		}
-		
 	}
-	if (::GetAsyncKeyState(0x57) & 0x8000f) // Key(W)
+	else
 	{
-
-		D3DXMatrixTranslation(&helper,0.0f , 0.0f, 5.0 * timedelta * -1.0);
+		movedInX -= speed;
 		for (int i = 0; i < NumOfObj; i++)
 		{
-			Worlds[i] *= helper;
-			Device->SetTransform(D3DTS_WORLD, &Worlds[i]);
-
+			Worlds[i] = translateObjects(Worlds[i], Position(-speed, 0.0f, 0.0f));
 		}
 	}
 }
+void movmentUp(float direction)
+{
+	if (direction > 0)
+	{
+		movedInY += speed;
+		for (int i = 0; i < NumOfObj; i++)
+		{
+			Worlds[i] = translateObjects(Worlds[i], Position(0.0f, speed, 0.0f));
+		}
+	}
+	else
+	{
+		movedInY -= speed;
+		for (int i = 0; i < NumOfObj; i++)
+		{
+			Worlds[i] = translateObjects(Worlds[i], Position(0.0f, -speed, 0.0f));
+		}
+	}
+}
+void movmentZ(float direction)
+{
+	if (direction>0)
+	{
+		movedInZ += speed;
+		for (int i = 0; i < NumOfObj; i++)
+		{
+			Worlds[i] = translateObjects(Worlds[i], Position(0.0f, 0.0f, speed));
+		}
+	}
+	else
+	{
+		movedInZ -= speed;
+		for (int i = 0; i < NumOfObj; i++)
+		{
+			Worlds[i] = translateObjects(Worlds[i], Position(0.0f, 0.0f, -speed));
+		}
+	}
+	
 
-//void HumanAnimations(float &angel)
-//{
-//	D3DXMATRIX helper , Rx;
-//	if (::GetAsyncKeyState(0x57) & 0x8000f) // Key(W)
-//	{
-//		D3DXMatrixRotationX(&helper, D3DX_PI / 6);
-//		D3DXMatrixRotationX(&Rx, D3DX_PI * 0.5);
-//	
-//		for (int i = 0; i < 1; i++)
-//		{
-//			D3DXMatrixTranslation(&Worlds[i], 0.0f, 0.0f, 0.0f);
-//			Worlds[i] *= helper;
-//
-//			
-//
-//		}
-//		D3DXMatrixTranslation(&helper, -0.5f, 0.0f, 0.0f);//legs
-//		Worlds[0] *= helper;
-//		Worlds[0] *= Rx;
-//		Device->SetTransform(D3DTS_WORLD, &Worlds[0]);
-//		//D3DXMatrixTranslation(&Worlds[1], 0.5f, 0.0f, 0.0f);//legs
-//		//D3DXMatrixTranslation(&Worlds[2], -0.5f, -0.16f, 0.7f);//shoes
-//		//D3DXMatrixTranslation(&Worlds[3], 0.5f, -0.16f, 0.7f);//shoes
-//	}
-//	//if (::GetAsyncKeyState(0x53) & 0x8000f) // Key(S)
-//	{
-//
-//		D3DXMatrixTranslation(&helper, 0.0f, 0.0f, 5.0 * timedelta * -1.0);
-//		for (int i = 0; i < NumOfObj; i++)
-//		{
-//			Worlds[i] *= helper;
-//			Device->SetTransform(D3DTS_WORLD, &Worlds[i]);
-//
-//		}
-//	}
-//
-//}
-
+	
+}
+D3DXMATRIX translateObjects(D3DXMATRIX objectToTranslate, Position move)
+{
+	D3DXMATRIX helper;
+	D3DXMatrixTranslation(&helper, move.x, move.y, move.z);
+	return(objectToTranslate *= helper);
+}
 void lighting()
 {
 	
-	D3DXVECTOR3 dir(1.0f, -0.0f, 0.25f);
-
+	D3DXVECTOR3 dir(2.0f, 0.5f, 2.0f);
 	D3DXCOLOR   c = d3d::WHITE;
 	D3DLIGHT9 dirLight = d3d::InitDirectionalLight(&dir, &c);
 
@@ -352,66 +425,63 @@ void lighting()
 	Device->LightEnable(0, true);
 
 }
-
 void FullHuman()
 {
-	D3DXCreateCylinder(Device, 0.25f, 0.15f, 1.5f, 20, 20, &Objects[0], 0);//legs
-	D3DXCreateCylinder(Device, 0.25f, 0.15f, 1.5f, 20, 20, &Objects[1], 0);//legs
-	D3DXCreateBox(Device, 0.3f, 0.6f, 0.3f, &Objects[2], 0); //shoes
-	D3DXCreateBox(Device, 0.3f, 0.6f, 0.3f, &Objects[3], 0); //shoes
-	D3DXCreateBox(Device, 2.0f, 2.5f, 0.6f, &Objects[4], 0); // body
-	D3DXCreateSphere(Device, 0.2f, 20, 20, &Objects[5], 0); // hands
-	D3DXCreateSphere(Device, 0.2f, 20, 20, &Objects[6], 0); // hands
-	D3DXCreateCylinder(Device, 0.15f, 0.1f, 1.7f, 20, 20, &Objects[7], 0);//arms
-	D3DXCreateCylinder(Device, 0.1f, 0.15f, 1.7f, 20, 20, &Objects[8], 0);//arms
-	D3DXCreateCylinder(Device, 0.15f, 0.25f, 0.6f, 20, 20, &Objects[9], 0);// neck
-	D3DXCreateSphere(Device, 0.5f, 20, 20, &Objects[10], 0);//head
-	D3DXCreateBox(Device, 0.3f, 0.03f, 0.03f, &Objects[11], 0);//leap
-	D3DXCreateCylinder(Device, 0.0f, 0.15f, 0.35f, 20, 20, &Objects[12], 0);//nose
-	D3DXCreateSphere(Device, 0.05f, 20, 20, &Objects[13], 0);//eyes
-	D3DXCreateSphere(Device, 0.05f, 20, 20, &Objects[14], 0);//eyes
-	D3DXCreateBox(Device, 0.15f, 0.03f, 0.03f, &Objects[15], 0);//eyesbrow
-	D3DXCreateBox(Device, 0.15f, 0.03f, 0.03f, &Objects[16], 0);//eyesbrow
-	D3DXCreateCylinder(Device, 0.0f, 0.5f, 1.0f, 20, 20, &Objects[17], 0);//hat
+	
 
+	D3DXCreateCylinder(Device, 0.25f, 0.25f, 2.0f, 20, 20, &Objects[0], 0);//legs
+	D3DXCreateCylinder(Device, 0.25f, 0.25f, 2.0f, 20, 20, &Objects[1], 0);//legs
+	D3DXCreateBox(Device, 2.0f, 2.5f, 2.0f, &Objects[4], 0); // body
+	D3DXCreateCylinder(Device, 0.2f, 0.2f, 1.8f, 20, 20, &Objects[2], 0);//arms
+	D3DXCreateCylinder(Device, 0.2f, 0.2f, 1.8f, 20, 20, &Objects[3], 0);//arms
+	D3DXCreateCylinder(Device, 0.15f, 0.25f, 0.6f, 20, 20, &Objects[5], 0);// neck
+	D3DXCreateSphere(Device, 0.5f, 20, 20, &Objects[6], 0);//head
+	D3DXCreateBox(Device, 0.3f, 0.03f, 0.03f, &Objects[7], 0);//leap
+	D3DXCreateCylinder(Device, 0.0f, 0.15f, 0.35f, 20, 20, &Objects[8], 0);//nose
+	D3DXCreateSphere(Device, 0.05f, 20, 20, &Objects[9], 0);//eyes
+	D3DXCreateSphere(Device, 0.05f, 20, 20, &Objects[10], 0);//eyes
+	D3DXCreateBox(Device, 0.15f, 0.03f, 0.03f, &Objects[11], 0);//eyesbrow
+	D3DXCreateBox(Device, 0.15f, 0.03f, 0.03f, &Objects[12], 0);//eyesbrow
+	D3DXCreateCylinder(Device, 0.0f, 0.5f, 1.0f, 20, 20, &Objects[13], 0);//hat
+	D3DXCreateBox(Device, 0.7f, 0.7f, 1.7f, &Objects[14], 0); // shoulder
+	D3DXCreateBox(Device, 0.7f, 0.7f, 1.7f, &Objects[15], 0); // shoulder
 
 	//
 	// Build world matrices - position the objects in world space.
 	//
-	D3DXMATRIX helper;
-	D3DXMATRIX  Rx, Rz, Rz2;
+	D3DXMATRIX leg1,leg2,shoes1,shoes2,arms1,arms2;
+	D3DXMATRIX  Rx;
 	D3DXMatrixRotationX(&Rx, D3DX_PI * 0.5);
-	D3DXMatrixRotationZ(&Rz, D3DX_PI * 0.15);
-	D3DXMatrixRotationZ(&Rz2, D3DX_PI * 0.85);
 
-	D3DXMatrixTranslation(&Worlds[0], -0.5f, 0.0f, 0.0f);//legs
-	D3DXMatrixTranslation(&Worlds[1], 0.5f, 0.0f, 0.0f);//legs
-	D3DXMatrixTranslation(&Worlds[2], -0.5f, -0.16f, 0.7f);//shoes
-	D3DXMatrixTranslation(&Worlds[3], 0.5f, -0.16f, 0.7f);//shoes
+
+	D3DXMatrixTranslation(&leg1, -0.5f, 0.2f, 0.0f);//legs
+	D3DXMatrixTranslation(&Worlds[0], 0.0f, 0.0f, 0.0f);//legs
+	D3DXMatrixTranslation(&leg2, 0.5f, 0.2f, 0.0f);//legs
+	D3DXMatrixTranslation(&Worlds[1], 0.0f, 0.0f, 0.0f);//legs
 	D3DXMatrixTranslation(&Worlds[4], 0.0f, 2.0f, 0.0f);//body
-	D3DXMatrixTranslation(&Worlds[5], -1.73f, 1.2f, 0.0f);//hands
-	D3DXMatrixTranslation(&Worlds[6], 1.73f, 1.2f, 0.0f);//hands
-	D3DXMatrixTranslation(&Worlds[7], 2.09f, 0.0f, 1.2f);//arms
-	D3DXMatrixTranslation(&Worlds[8], 2.09f, 0.0f, -1.2f);//arms
-	D3DXMatrixTranslation(&Worlds[9], 0.0f, 3.4f, 0.0f);//neck
-	D3DXMatrixTranslation(&Worlds[10], 0.0f, 3.95f, 0.0f);//head
-	D3DXMatrixTranslation(&Worlds[11], 0.0f, 3.7f, -0.42f);//leap
-	D3DXMatrixTranslation(&Worlds[12], 0.0f, 3.9f, -0.42f);//nose
-	D3DXMatrixTranslation(&Worlds[13], -0.2f, 4.0f, -0.42f);//eeye
-	D3DXMatrixTranslation(&Worlds[14], 0.2f, 4.0f, -0.42f);//eye
-	D3DXMatrixTranslation(&Worlds[15], -0.2f, 4.12f, -0.42f);//eyebrow
-	D3DXMatrixTranslation(&Worlds[16], 0.2f, 4.12f, -0.42f);//eyebrow
-	D3DXMatrixTranslation(&Worlds[17], 0.0f, 0.0, -4.7f);//hat
+	D3DXMatrixTranslation(&arms1, -1.2f, 2.2f, 0.0f);//arms
+	D3DXMatrixTranslation(&Worlds[2], 0.0f, 0.0f, 0.0f);//arms
+	D3DXMatrixTranslation(&Worlds[3], 0.0f, 0.0f, 0.0f);//arms
+	D3DXMatrixTranslation(&arms2, 1.2f, 2.2f, 0.0f);//arms
+	D3DXMatrixTranslation(&Worlds[5], 0.0f, 3.4f, 0.0f);//neck
+	D3DXMatrixTranslation(&Worlds[6], 0.0f, 3.95f, 0.0f);//head
+	D3DXMatrixTranslation(&Worlds[7], 0.0f, 3.7f, -0.42f);//leap
+	D3DXMatrixTranslation(&Worlds[8], 0.0f, 3.9f, -0.42f);//nose
+	D3DXMatrixTranslation(&Worlds[9], -0.2f, 4.0f, -0.42f);//eeye
+	D3DXMatrixTranslation(&Worlds[10], 0.2f, 4.0f, -0.42f);//eye
+	D3DXMatrixTranslation(&Worlds[11], -0.2f, 4.12f, -0.42f);//eyebrow
+	D3DXMatrixTranslation(&Worlds[12], 0.2f, 4.12f, -0.42f);//eyebrow
+	D3DXMatrixTranslation(&Worlds[13], 0.0f, 0.0, -4.7f);//hat
+	D3DXMatrixTranslation(&Worlds[14], -1.2f, 2.8f, 0.0f);//shoulder
+	D3DXMatrixTranslation(&Worlds[15], 1.2f, 2.8f, 0.0f);//shoulder
 
 
-	Worlds[0] *= Rx;//foot
-	Worlds[1] *= Rx;//foot
-	Worlds[2] *= Rx;//shoes
-	Worlds[3] *= Rx;//shoes
-	Worlds[7] *= (Rx * Rz2);//arms
-	Worlds[8] *= (Rx * Rz);//arms
-	Worlds[9] = (Rx * Worlds[9]);//neck
-	Worlds[17] *= (Rx);//hat
+	Worlds[0] = Rx*leg1;//foot
+	Worlds[1] = Rx*leg2;//foot
+	Worlds[2] = Rx*arms1;//arms 
+	Worlds[3] = Rx*arms2;//arms
+	Worlds[5] = (Rx * Worlds[5]);//neck
+	Worlds[13] *= (Rx);//hat
 
 
 	//
@@ -420,25 +490,22 @@ void FullHuman()
 
 	Mtrls[0] = d3d::WHITE_MTRL;
 	Mtrls[1] = d3d::WHITE_MTRL;
-	Mtrls[2] = d3d::YELLOW_MTRL;
-	Mtrls[3] = d3d::YELLOW_MTRL;
 	Mtrls[4] = d3d::GREEN_MTRL;
-	Mtrls[5] = d3d::RED_MTRL;
-	Mtrls[6] = d3d::RED_MTRL;
-	Mtrls[7] = d3d::BLUE_MTRL;
-	Mtrls[8] = d3d::BLUE_MTRL;
-	Mtrls[9] = d3d::WHITE_MTRL;
-	Mtrls[10] = d3d::WHITE_MTRL;
-	Mtrls[11] = d3d::RED_MTRL;
+	Mtrls[2] = d3d::WHITE_MTRL;
+	Mtrls[3] = d3d::WHITE_MTRL;
+	Mtrls[5] = d3d::WHITE_MTRL;
+	Mtrls[6] = d3d::WHITE_MTRL;
+	Mtrls[7] = d3d::RED_MTRL;
+	Mtrls[8] = d3d::BLACK_MTRL;
+	Mtrls[9] = d3d::RED_MTRL;
+	Mtrls[10] = d3d::RED_MTRL;
+	Mtrls[11] = d3d::BLACK_MTRL;
 	Mtrls[12] = d3d::BLACK_MTRL;
 	Mtrls[13] = d3d::RED_MTRL;
 	Mtrls[14] = d3d::RED_MTRL;
-	Mtrls[15] = d3d::BLACK_MTRL;
-	Mtrls[16] = d3d::BLACK_MTRL;
-	Mtrls[17] = d3d::RED_MTRL;
+	Mtrls[15] = d3d::RED_MTRL;
 
 }
-
 void CreateFloreAndSky()
 {
 	D3DXMATRIX helper;
@@ -469,4 +536,38 @@ void CreateFloreAndSky()
 	sky = new PlaneWithTexture(Device);
 
 
+}
+void createWalls()
+{
+	D3DXMATRIX move_front_wall , move_left_wall , move_right_wall;
+	D3DXMATRIX rotation_frontWall, rotation_leftWall, rotation_rightWall;
+	D3DXMatrixRotationY(&rotation_frontWall, D3DX_PI);
+	D3DXMatrixRotationY(&rotation_leftWall, -D3DX_PI * 0.5);
+	D3DXMatrixRotationY(&rotation_rightWall, D3DX_PI * 0.5);
+	D3DXMatrixTranslation(&walls_Worlds[0], 0.0f, 0.0f, 100.0f);//back wall
+	D3DXMatrixTranslation(&walls_Worlds[1], 0.0f, 0.0f, 0.0f);//front wall
+	D3DXMatrixTranslation(&move_front_wall, 0.0f, 0.0f, -100.0f);//front wall
+	D3DXMatrixTranslation(&walls_Worlds[2], 0.0f, 0.0f, 0.0f);//left wall
+	D3DXMatrixTranslation(&move_left_wall, -100.0f, 0.0f,0.0f);//left wall
+	D3DXMatrixTranslation(&walls_Worlds[3], 0.0f, 0.0f, 0.0f);//right wall
+	D3DXMatrixTranslation(&move_right_wall, 100.0f, 0.0f, 0.0f);//right wall
+
+	walls_Worlds[1] = rotation_frontWall * move_front_wall;
+	walls_Worlds[2] = rotation_leftWall * move_left_wall;
+	walls_Worlds[3] = rotation_rightWall * move_right_wall;
+	
+
+
+
+
+
+	D3DXCreateTextureFromFile(
+		Device,
+		L"walls.jpg",
+		&TexWalls);
+
+	backWall = new PlaneWithTexture(Device);
+	frontWall = new PlaneWithTexture(Device);
+	leftWall = new PlaneWithTexture(Device);
+	rightWall = new PlaneWithTexture(Device);
 }
