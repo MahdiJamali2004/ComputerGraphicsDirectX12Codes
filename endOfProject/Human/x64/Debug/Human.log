@@ -1,0 +1,17 @@
+﻿  human.cpp
+C:\Users\ITC_POOYA\Desktop\term3\Graphic\Homework5\Human\human.cpp(92,13): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\ITC_POOYA\Desktop\term3\Graphic\Homework5\Human\human.cpp(288,74): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\ITC_POOYA\Desktop\term3\Graphic\Homework5\Human\human.cpp(289,29): warning C4305: '-=': truncation from 'double' to 'float'
+C:\Users\ITC_POOYA\Desktop\term3\Graphic\Homework5\Human\human.cpp(310,29): warning C4305: '+=': truncation from 'double' to 'float'
+C:\Users\ITC_POOYA\Desktop\term3\Graphic\Homework5\Human\human.cpp(311,73): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\ITC_POOYA\Desktop\term3\Graphic\Homework5\Human\human.cpp(597,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\ITC_POOYA\Desktop\term3\Graphic\Homework5\Human\human.cpp(901,64): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\ITC_POOYA\Desktop\term3\Graphic\Homework5\Human\human.cpp(902,78): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\ITC_POOYA\Desktop\term3\Graphic\Homework5\Human\human.cpp(903,18): warning C4305: '+=': truncation from 'double' to 'float'
+C:\Users\ITC_POOYA\Desktop\term3\Graphic\Homework5\Human\human.cpp(904,15): warning C4305: '+=': truncation from 'double' to 'float'
+C:\Users\ITC_POOYA\Desktop\term3\Graphic\Homework5\Human\human.cpp(908,65): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\ITC_POOYA\Desktop\term3\Graphic\Homework5\Human\human.cpp(909,79): warning C4305: 'argument': truncation from 'double' to 'float'
+C:\Users\ITC_POOYA\Desktop\term3\Graphic\Homework5\Human\human.cpp(910,18): warning C4305: '-=': truncation from 'double' to 'float'
+C:\Users\ITC_POOYA\Desktop\term3\Graphic\Homework5\Human\human.cpp(911,15): warning C4305: '-=': truncation from 'double' to 'float'
+C:\Users\ITC_POOYA\Desktop\term3\Graphic\Homework5\Human\human.cpp(646): warning C4715: 'createMeshFromFile': not all control paths return a value
+  Human.vcxproj -> C:\Users\ITC_POOYA\Desktop\term3\Graphic\Homework5\x64\Debug\Human.exe
